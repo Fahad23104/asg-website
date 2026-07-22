@@ -154,7 +154,6 @@
     // REALTIME SYNC & CLIENT-SIDE HISTORY
     // ==========================================
     function syncGuardStateAndHistory() {
-        // Fetch all shifts for this guard without forcing a composite index
         db.collection('shifts')
           .where('guardId', '==', currentUser.uid)
           .onSnapshot(snapshot => {
@@ -169,13 +168,11 @@
                   data.id = doc.id;
                   shifts.push(data);
 
-                  // Detect if there is an active shift (checked in via mobile or web)
                   if (data.status === 'active') {
                       activeShift = data;
                   }
               });
 
-              // Update Duty UI state based on active shift presence
               if (activeShift) {
                   isOnDuty = true;
                   currentShiftId = activeShift.id;
@@ -186,7 +183,6 @@
                   updateDutyUI(false);
               }
 
-              // Sort shifts locally by checkInTime descending (newest first)
               shifts.sort((a, b) => {
                   let timeA = a.checkInTime ? a.checkInTime.toDate() : new Date();
                   let timeB = b.checkInTime ? b.checkInTime.toDate() : new Date();
@@ -198,12 +194,16 @@
                   return;
               }
 
-              // Render history items
               shifts.forEach(data => {
                   if (!data.checkInTime) return;
 
                   const checkInDate = data.checkInTime.toDate();
-                  const dateStr = checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                  
+                  // 1. Exact Date Format: Year-Month-Day
+                  const year = checkInDate.getFullYear();
+                  const month = String(checkInDate.getMonth() + 1).padStart(2, '0');
+                  const day = String(checkInDate.getDate()).padStart(2, '0');
+                  const dateStr = `${year}-${month}-${day}`;
                   
                   let outStr = 'ACTIVE';
                   let durStr = 'Ongoing';
@@ -212,8 +212,28 @@
                   if (data.checkOutTime) {
                       const checkOutDate = data.checkOutTime.toDate();
                       outStr = checkOutDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      const diffMins = Math.floor((checkOutDate - checkInDate) / 60000);
-                      durStr = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+                      
+                      // 2. Exact Duration Math: Years, Months, Days, Hours, Minutes
+                      let diffMs = checkOutDate - checkInDate;
+                      let diffMins = Math.floor(diffMs / 60000);
+                      let diffHrs = Math.floor(diffMins / 60);
+                      let diffDays = Math.floor(diffHrs / 24);
+                      let diffMonths = Math.floor(diffDays / 30);
+                      let diffYears = Math.floor(diffMonths / 12);
+
+                      let mins = diffMins % 60;
+                      let hrs = diffHrs % 24;
+                      let days = diffDays % 30;
+                      let mos = diffMonths % 12;
+
+                      let durParts = [];
+                      if (diffYears > 0) durParts.push(`${diffYears}y`);
+                      if (mos > 0) durParts.push(`${mos}mo`);
+                      if (days > 0) durParts.push(`${days}d`);
+                      if (hrs > 0) durParts.push(`${hrs}h`);
+                      if (mins > 0 || durParts.length === 0) durParts.push(`${mins}m`);
+
+                      durStr = durParts.join(' ');
                       iconColor = 'text-asg-accent';
                   }
 
@@ -226,7 +246,7 @@
                                   <div class="text-xs text-slate-400">In: ${checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - Out: ${outStr}</div>
                               </div>
                           </div>
-                          <div class="font-bold text-sm text-white">${durStr}</div>
+                          <div class="font-bold text-sm text-white text-right max-w-[80px] leading-tight">${durStr}</div>
                       </div>
                   `;
                   list.innerHTML += html;
