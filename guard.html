@@ -97,189 +97,229 @@
     </div>
 
     <script>
-        // ==========================================
-        // 1. ADD YOUR FIREBASE CONFIG HERE
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyB0APzpLavq-760Tqonk-1QBFJ548iHIH4",
-            authDomain: "asg-security-6c996.firebaseapp.com",
-            projectId: "asg-security-6c996",
-            storageBucket: "asg-security-6c996.firebasestorage.app",
-            messagingSenderId: "263955462065",
-            appId: "1:263955462065:web:6212a45d8697a83bcf2f90",
-            measurementId: "G-8CH28YZZ0G"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+    // ==========================================
+    // 1. YOUR FIREBASE CONFIG
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyB0APzpLavq-760Tqonk-1QBFJ548iHIH4",
+  authDomain: "asg-security-6c996.firebaseapp.com",
+  projectId: "asg-security-6c996",
+  storageBucket: "asg-security-6c996.firebasestorage.app",
+  messagingSenderId: "263955462065",
+  appId: "1:263955462065:web:6212a45d8697a83bcf2f90",
+  measurementId: "G-8CH28YZZ0G"
+};
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        let currentUser = null;
-        let isOnDuty = false;
-        let currentShiftId = null;
+    let currentUser = null;
+    let isOnDuty = false;
+    let currentShiftId = null;
 
-        // ==========================================
-        // AUTHENTICATION LOGIC
-        // ==========================================
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
-                loadHistory();
-            } else {
-                currentUser = null;
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
-            }
-        });
-
-        async function login() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const errEl = document.getElementById('auth-error');
-            try {
-                await auth.signInWithEmailAndPassword(email, pass);
-                errEl.classList.add('hidden');
-            } catch (e) {
-                errEl.textContent = e.message;
-                errEl.classList.remove('hidden');
-            }
+    // ==========================================
+    // AUTHENTICATION & REALTIME SYNC
+    // ==========================================
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            
+            // Start listening to real-time sync with mobile & history
+            syncGuardStateAndHistory();
+        } else {
+            currentUser = null;
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
         }
+    });
 
-        function logout() { auth.signOut(); }
-
-        // ==========================================
-        // GPS & DUTY LOGIC
-        // ==========================================
-        async function toggleDuty() {
-            const btn = document.getElementById('duty-btn');
-            const icon = document.getElementById('duty-icon');
-            const label = document.getElementById('duty-label');
-            const status = document.getElementById('status-text');
-
-            if (!navigator.geolocation) {
-                alert("Geolocation is not supported by your browser");
-                return;
-            }
-
-            // Grab GPS via Browser
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-
-                if (!isOnDuty) {
-                    // CHECK IN
-                    const docRef = await db.collection('shifts').add({
-                        guardId: currentUser.uid,
-                        guardEmail: currentUser.email,
-                        checkInTime: firebase.firestore.FieldValue.serverTimestamp(),
-                        checkInLat: lat,
-                        checkInLng: lng,
-                        status: 'active'
-                    });
-                    currentShiftId = docRef.id;
-                    isOnDuty = true;
-
-                    // Update UI to Red / Active
-                    btn.className = "w-64 h-64 rounded-full border-4 border-red-500 bg-red-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none";
-                    icon.className = "fas fa-stop-circle text-6xl text-red-500 mb-4";
-                    label.className = "text-xl font-bold text-red-500 tracking-widest";
-                    label.textContent = "CHECK OUT";
-                    status.textContent = "DUTY ACTIVE - GPS LOGGED";
-                    status.classList.replace('text-slate-400', 'text-red-500');
-
-                } else {
-                    // CHECK OUT
-                    if (currentShiftId) {
-                        await db.collection('shifts').doc(currentShiftId).update({
-                            checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
-                            checkOutLat: lat,
-                            checkOutLng: lng,
-                            status: 'completed'
-                        });
-                        currentShiftId = null;
-                        isOnDuty = false;
-
-                        // Update UI to Green / Standby
-                        btn.className = "w-64 h-64 rounded-full border-4 border-green-500 bg-green-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none";
-                        icon.className = "fas fa-play-circle text-6xl text-green-500 mb-4";
-                        label.className = "text-xl font-bold text-green-500 tracking-widest";
-                        label.textContent = "CHECK IN";
-                        status.textContent = "Standby - Ready for Deployment";
-                        status.classList.replace('text-red-500', 'text-slate-400');
-                    }
-                }
-            }, (error) => {
-                alert("Please allow location permissions to deploy.");
-            });
+    async function login() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+        const errEl = document.getElementById('auth-error');
+        try {
+            await auth.signInWithEmailAndPassword(email, pass);
+            errEl.classList.add('hidden');
+        } catch (e) {
+            errEl.textContent = e.message;
+            errEl.classList.remove('hidden');
         }
+    }
 
-        // ==========================================
-        // HISTORY VIEW & NAVIGATION
-        // ==========================================
-        function switchView(view) {
-            const dash = document.getElementById('tab-dashboard');
-            const hist = document.getElementById('tab-history');
-            const navDash = document.getElementById('nav-dash');
-            const navHist = document.getElementById('nav-hist');
+    function logout() { auth.signOut(); }
 
-            if (view === 'dashboard') {
-                dash.classList.remove('hidden');
-                hist.classList.add('hidden');
-                navDash.classList.replace('text-slate-500', 'text-asg-accent');
-                navHist.classList.replace('text-asg-accent', 'text-slate-500');
-            } else {
-                dash.classList.add('hidden');
-                hist.classList.remove('hidden');
-                navHist.classList.replace('text-slate-500', 'text-asg-accent');
-                navDash.classList.replace('text-asg-accent', 'text-slate-500');
-            }
-        }
+    // ==========================================
+    // REALTIME SYNC & CLIENT-SIDE HISTORY
+    // ==========================================
+    function syncGuardStateAndHistory() {
+        // Fetch all shifts for this guard without forcing a composite index
+        db.collection('shifts')
+          .where('guardId', '==', currentUser.uid)
+          .onSnapshot(snapshot => {
+              const list = document.getElementById('history-list');
+              list.innerHTML = ''; 
 
-        function loadHistory() {
-            db.collection('shifts')
-              .where('guardId', '==', currentUser.uid)
-              .orderBy('checkInTime', 'desc')
-              .limit(20)
-              .onSnapshot(snapshot => {
-                  const list = document.getElementById('history-list');
-                  list.innerHTML = ''; // clear
+              let shifts = [];
+              let activeShift = null;
 
-                  snapshot.forEach(doc => {
-                      const data = doc.data();
-                      if(!data.checkInTime) return; // skip pending
-                      
-                      const checkInDate = data.checkInTime.toDate();
-                      const dateStr = checkInDate.toLocaleDateString();
-                      
-                      let outStr = 'ACTIVE';
-                      let durStr = 'Ongoing';
-                      let iconColor = 'text-green-500';
+              snapshot.forEach(doc => {
+                  const data = doc.data();
+                  data.id = doc.id;
+                  shifts.push(data);
 
-                      if (data.checkOutTime) {
-                          const checkOutDate = data.checkOutTime.toDate();
-                          outStr = checkOutDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                          const diffMins = Math.floor((checkOutDate - checkInDate) / 60000);
-                          durStr = `${Math.floor(diffMins/60)}h ${diffMins%60}m`;
-                          iconColor = 'text-asg-accent';
-                      }
-
-                      const html = `
-                          <div class="bg-asg-card p-4 rounded border border-slate-700 flex justify-between items-center">
-                              <div class="flex items-center space-x-4">
-                                  <i class="fas fa-clock ${iconColor} text-2xl"></i>
-                                  <div>
-                                      <div class="font-bold">${dateStr}</div>
-                                      <div class="text-xs text-slate-400">In: ${checkInDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - Out: ${outStr}</div>
-                                  </div>
-                              </div>
-                              <div class="font-bold text-lg">${durStr}</div>
-                          </div>
-                      `;
-                      list.innerHTML += html;
-                  });
+                  // Detect if there is an active shift (checked in via mobile or web)
+                  if (data.status === 'active') {
+                      activeShift = data;
+                  }
               });
+
+              // Update Duty UI state based on active shift presence
+              if (activeShift) {
+                  isOnDuty = true;
+                  currentShiftId = activeShift.id;
+                  updateDutyUI(true);
+              } else {
+                  isOnDuty = false;
+                  currentShiftId = null;
+                  updateDutyUI(false);
+              }
+
+              // Sort shifts locally by checkInTime descending (newest first)
+              shifts.sort((a, b) => {
+                  let timeA = a.checkInTime ? a.checkInTime.toDate() : new Date();
+                  let timeB = b.checkInTime ? b.checkInTime.toDate() : new Date();
+                  return timeB - timeA;
+              });
+
+              if (shifts.length === 0) {
+                  list.innerHTML = '<div class="text-center text-slate-500 py-8">No deployment history found.</div>';
+                  return;
+              }
+
+              // Render history items
+              shifts.forEach(data => {
+                  if (!data.checkInTime) return;
+
+                  const checkInDate = data.checkInTime.toDate();
+                  const dateStr = checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                  
+                  let outStr = 'ACTIVE';
+                  let durStr = 'Ongoing';
+                  let iconColor = 'text-green-500';
+
+                  if (data.checkOutTime) {
+                      const checkOutDate = data.checkOutTime.toDate();
+                      outStr = checkOutDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      const diffMins = Math.floor((checkOutDate - checkInDate) / 60000);
+                      durStr = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+                      iconColor = 'text-asg-accent';
+                  }
+
+                  const html = `
+                      <div class="bg-asg-card p-4 rounded border border-slate-700 flex justify-between items-center">
+                          <div class="flex items-center space-x-4">
+                              <i class="fas fa-clock ${iconColor} text-xl"></i>
+                              <div>
+                                  <div class="font-bold text-sm text-white">${dateStr}</div>
+                                  <div class="text-xs text-slate-400">In: ${checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - Out: ${outStr}</div>
+                              </div>
+                          </div>
+                          <div class="font-bold text-sm text-white">${durStr}</div>
+                      </div>
+                  `;
+                  list.innerHTML += html;
+              });
+          }, error => {
+              console.error("Firestore sync error:", error);
+          });
+    }
+
+    // Dynamic UI Toggle for Duty Button
+    function updateDutyUI(active) {
+        const btn = document.getElementById('duty-btn');
+        const icon = document.getElementById('duty-icon');
+        const label = document.getElementById('duty-label');
+        const status = document.getElementById('status-text');
+
+        if (active) {
+            btn.className = "w-64 h-64 rounded-full border-4 border-red-500 bg-red-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none shadow-[0_0_30px_rgba(239,68,68,0.2)]";
+            icon.className = "fas fa-stop-circle text-6xl text-red-500 mb-4";
+            label.className = "text-xl font-bold text-red-500 tracking-widest";
+            label.textContent = "CHECK OUT";
+            status.textContent = "DUTY ACTIVE - GPS LOGGED";
+            status.className = "text-red-500 font-bold tracking-widest mb-10 text-center uppercase";
+        } else {
+            btn.className = "w-64 h-64 rounded-full border-4 border-green-500 bg-green-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none shadow-[0_0_30px_rgba(34,197,94,0.2)]";
+            icon.className = "fas fa-play-circle text-6xl text-green-500 mb-4";
+            label.className = "text-xl font-bold text-green-500 tracking-widest";
+            label.textContent = "CHECK IN";
+            status.textContent = "Standby - Ready for Deployment";
+            status.className = "text-slate-400 font-bold tracking-widest mb-10 text-center uppercase";
         }
-    </script>
+    }
+
+    // ==========================================
+    // GPS & TOGGLE DUTY
+    // ==========================================
+    async function toggleDuty() {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            if (!isOnDuty) {
+                // Check In
+                await db.collection('shifts').add({
+                    guardId: currentUser.uid,
+                    guardEmail: currentUser.email,
+                    checkInTime: firebase.firestore.FieldValue.serverTimestamp(),
+                    checkInLat: lat,
+                    checkInLng: lng,
+                    status: 'active'
+                });
+            } else {
+                // Check Out
+                if (currentShiftId) {
+                    await db.collection('shifts').doc(currentShiftId).update({
+                        checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        checkOutLat: lat,
+                        checkOutLng: lng,
+                        status: 'completed'
+                    });
+                }
+            }
+        }, (error) => {
+            alert("Location permission is required to check in/out.");
+        });
+    }
+
+    // ==========================================
+    // VIEW NAVIGATION
+    // ==========================================
+    function switchView(view) {
+        const dash = document.getElementById('tab-dashboard');
+        const hist = document.getElementById('tab-history');
+        const navDash = document.getElementById('nav-dash');
+        const navHist = document.getElementById('nav-hist');
+
+        if (view === 'dashboard') {
+            dash.classList.remove('hidden');
+            hist.classList.add('hidden');
+            navDash.classList.replace('text-slate-500', 'text-asg-accent');
+            navHist.classList.replace('text-asg-accent', 'text-slate-500');
+        } else {
+            dash.classList.add('hidden');
+            hist.classList.remove('hidden');
+            navHist.classList.replace('text-slate-500', 'text-asg-accent');
+            navDash.classList.replace('text-asg-accent', 'text-slate-500');
+        }
+    }
+</script>
 </body>
 </html>
