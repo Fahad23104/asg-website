@@ -1,6 +1,26 @@
 // REPLACE WITH YOUR GOOGLE APPS SCRIPT URL
 const DEPLOYMENT_API_ENDPOINT = "https://script.google.com/macros/s/AKfycbyYREfoWZhsrcJWhFD2w4NAyegG7QMk1dKxgWK3UZxZl3TKawRRIKKW0d5bpkOXTKPP/exec";
 
+// Mobile Menu Logic
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileCloseBtn = document.getElementById('mobile-close-btn');
+const mobileMenu = document.getElementById('mobile-menu');
+const mobileLinks = document.querySelectorAll('.mobile-link');
+
+function toggleMobileMenu() {
+    mobileMenu.classList.toggle('translate-x-full');
+}
+
+if (mobileMenuBtn && mobileCloseBtn && mobileMenu) {
+    mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    mobileCloseBtn.addEventListener('click', toggleMobileMenu);
+    
+    // Close menu when a link is clicked
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', toggleMobileMenu);
+    });
+}
+
 // Dynamic Navbar Background on Scroll
 const navbar = document.getElementById('navbar');
 window.addEventListener('scroll', () => {
@@ -21,8 +41,8 @@ function switchTab(target) {
     const formClient = document.getElementById('form-client');
     const formGuard = document.getElementById('form-guard');
 
-    const activeBtnClass = "flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all duration-300 bg-asg-accent text-asg-dark shadow-md rounded-sm";
-    const inactiveBtnClass = "flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all duration-300 text-slate-400 hover:text-white rounded-sm";
+    const activeBtnClass = "flex-1 py-3 md:py-4 text-[11px] md:text-sm font-bold uppercase tracking-widest transition-all duration-300 bg-asg-accent text-asg-dark shadow-md rounded-sm";
+    const inactiveBtnClass = "flex-1 py-3 md:py-4 text-[11px] md:text-sm font-bold uppercase tracking-widest transition-all duration-300 text-slate-400 hover:text-white rounded-sm";
 
     if (target === 'client') {
         btnClient.className = activeBtnClass;

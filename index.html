@@ -2,7 +2,7 @@
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ASG | Elite Security & Tactical Deployment UK</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,10 +16,7 @@
                 extend: {
                     colors: {
                         asg: {
-                            dark: '#0f172a', /* slate-900 */
-                            card: '#1e293b', /* slate-800 */
-                            accent: '#f59e0b', /* amber-500 */
-                            accentHover: '#d97706', /* amber-600 */
+                            dark: '#0f172a', card: '#1e293b', accent: '#f59e0b', accentHover: '#d97706',
                         }
                     },
                     fontFamily: {
@@ -35,186 +32,201 @@
 
     <!-- Dynamic Navbar -->
     <nav id="navbar" class="fixed top-0 w-full z-50 bg-asg-dark/0 transition-all duration-500 py-4">
-        <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo(0,0)">
-                <i class="fas fa-shield-halved text-asg-accent text-3xl"></i>
-                <span class="text-3xl font-extrabold tracking-widest text-white">ASG</span>
+                <i class="fas fa-shield-halved text-asg-accent text-2xl md:text-3xl"></i>
+                <span class="text-2xl md:text-3xl font-extrabold tracking-widest text-white">ASG</span>
             </div>
+            
+            <!-- Desktop Links -->
             <div class="hidden md:flex items-center space-x-8 text-sm font-semibold tracking-widest uppercase">
                 <a href="#services" class="text-slate-300 hover:text-asg-accent transition-colors">Services</a>
                 <a href="#about" class="text-slate-300 hover:text-asg-accent transition-colors">About Us</a>
-                <a href="#portal" class="bg-asg-accent hover:bg-asg-accentHover text-asg-dark px-6 py-2.5 rounded shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all duration-300 transform hover:-translate-y-0.5">Client Portal</a>
                 <a href="guard.html" class="text-slate-300 hover:text-asg-accent transition-colors">Guard Login</a>
+                <a href="#portal" class="bg-asg-accent hover:bg-asg-accentHover text-asg-dark px-6 py-2.5 rounded shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all duration-300 transform hover:-translate-y-0.5">Client Portal</a>
             </div>
+
+            <!-- Mobile Menu Toggle Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-slate-300 hover:text-white focus:outline-none p-2">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
         </div>
     </nav>
 
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 bg-asg-dark/95 backdrop-blur-xl z-[60] transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center space-y-8 md:hidden">
+        <button id="mobile-close-btn" class="absolute top-6 right-6 text-slate-400 hover:text-white p-2">
+            <i class="fas fa-times text-3xl"></i>
+        </button>
+        <a href="#services" class="mobile-link text-2xl font-bold tracking-widest uppercase text-slate-300 hover:text-asg-accent">Services</a>
+        <a href="#about" class="mobile-link text-2xl font-bold tracking-widest uppercase text-slate-300 hover:text-asg-accent">About Us</a>
+        <a href="guard.html" class="text-2xl font-bold tracking-widest uppercase text-slate-300 hover:text-asg-accent">Guard Login</a>
+        <a href="#portal" class="mobile-link bg-asg-accent text-asg-dark px-8 py-4 rounded text-xl font-bold tracking-widest uppercase mt-4">Client Portal</a>
+    </div>
+
     <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <section class="relative min-h-[90vh] md:min-h-screen flex items-center pt-20 overflow-hidden">
         <!-- Abstract Background -->
         <div class="absolute inset-0 z-0">
-            <div class="absolute inset-0 bg-gradient-to-r from-asg-dark via-asg-dark/90 to-transparent z-10"></div>
-            <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Security Guard" class="w-full h-full object-cover opacity-30" />
+            <div class="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-asg-dark via-asg-dark/95 to-asg-dark/40 z-10"></div>
+            <img src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80" alt="Security Guard" class="w-full h-full object-cover opacity-30 md:opacity-40" />
         </div>
         
-        <div class="max-w-7xl mx-auto px-6 relative z-10 w-full load-fade-in">
-            <div class="max-w-3xl space-y-8">
-                <div class="inline-flex items-center space-x-2 bg-asg-card/60 border border-slate-700 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest text-asg-accent backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10 w-full load-fade-in mt-10 md:mt-0">
+            <div class="max-w-3xl space-y-6 md:space-y-8">
+                <div class="inline-flex items-center space-x-2 bg-asg-card/80 border border-slate-700 px-3 md:px-4 py-2 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest text-asg-accent backdrop-blur-sm">
                     <i class="fas fa-satellite-dish animate-pulse"></i>
                     <span>UK-Wide Rapid Deployment</span>
                 </div>
-                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight text-white">
+                <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight leading-tight text-white">
                     Uncompromising <br>
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-asg-accent to-yellow-200">Security Solutions.</span>
                 </h1>
-                <p class="text-lg md:text-xl text-slate-300 font-light leading-relaxed max-w-2xl">
+                <p class="text-base md:text-xl text-slate-300 font-light leading-relaxed max-w-2xl">
                     ASG provides elite, SIA-licensed personnel for corporate, retail, and close protection environments. Precision logistics meet unmatched tactical professionalism.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center gap-4 pt-4">
-                    <a href="#portal" onclick="switchTab('client')" class="w-full sm:w-auto px-8 py-4 bg-asg-accent hover:bg-asg-accentHover text-asg-dark font-bold uppercase tracking-wider rounded transition-all duration-300 text-center">Hire Security</a>
-                    <a href="#portal" onclick="switchTab('guard')" class="w-full sm:w-auto px-8 py-4 bg-transparent border border-slate-500 hover:border-asg-accent hover:text-asg-accent text-white font-bold uppercase tracking-wider rounded transition-all duration-300 text-center">Join the Force</a>
+                    <a href="#portal" onclick="switchTab('client')" class="w-full sm:w-auto px-8 py-4 bg-asg-accent hover:bg-asg-accentHover text-asg-dark font-bold uppercase tracking-wider rounded transition-all duration-300 text-center text-sm md:text-base">Hire Security</a>
+                    <a href="#portal" onclick="switchTab('guard')" class="w-full sm:w-auto px-8 py-4 bg-transparent border border-slate-500 hover:border-asg-accent hover:text-asg-accent text-white font-bold uppercase tracking-wider rounded transition-all duration-300 text-center text-sm md:text-base">Join the Force</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Stats Bar -->
-    <section class="bg-asg-card border-y border-slate-800 py-12 relative z-20">
-        <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div class="space-y-2 scroll-reveal delay-100">
-                <h3 class="text-4xl font-black text-asg-accent">24/7</h3>
-                <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Active Dispatch</p>
+    <section class="bg-asg-card border-y border-slate-800 py-8 md:py-12 relative z-20">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
+            <div class="space-y-1 md:space-y-2 scroll-reveal delay-100">
+                <h3 class="text-3xl md:text-4xl font-black text-asg-accent">24/7</h3>
+                <p class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-semibold">Active Dispatch</p>
             </div>
-            <div class="space-y-2 scroll-reveal delay-200">
-                <h3 class="text-4xl font-black text-asg-accent">SIA</h3>
-                <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Fully Licensed</p>
+            <div class="space-y-1 md:space-y-2 scroll-reveal delay-200">
+                <h3 class="text-3xl md:text-4xl font-black text-asg-accent">SIA</h3>
+                <p class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-semibold">Fully Licensed</p>
             </div>
-            <div class="space-y-2 scroll-reveal delay-300">
-                <h3 class="text-4xl font-black text-asg-accent">100%</h3>
-                <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Vetting Standard</p>
+            <div class="space-y-1 md:space-y-2 scroll-reveal delay-300">
+                <h3 class="text-3xl md:text-4xl font-black text-asg-accent">100%</h3>
+                <p class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-semibold">Vetting Standard</p>
             </div>
-            <div class="space-y-2 scroll-reveal delay-400">
-                <h3 class="text-4xl font-black text-asg-accent">UK</h3>
-                <p class="text-xs uppercase tracking-widest text-slate-400 font-semibold">Nationwide Coverage</p>
+            <div class="space-y-1 md:space-y-2 scroll-reveal delay-400">
+                <h3 class="text-3xl md:text-4xl font-black text-asg-accent">UK</h3>
+                <p class="text-[10px] md:text-xs uppercase tracking-widest text-slate-400 font-semibold">Nationwide Coverage</p>
             </div>
         </div>
     </section>
 
     <!-- Services Grid -->
-    <section id="services" class="py-24 px-6 bg-asg-dark relative">
+    <section id="services" class="py-16 md:py-24 px-4 md:px-6 bg-asg-dark relative">
         <div class="max-w-7xl mx-auto">
-            <div class="mb-16 md:flex justify-between items-end scroll-reveal">
+            <div class="mb-12 md:mb-16 md:flex justify-between items-end scroll-reveal">
                 <div class="max-w-2xl">
-                    <h2 class="text-sm font-bold text-asg-accent uppercase tracking-widest mb-2">Our Capabilities</h2>
-                    <h3 class="text-4xl md:text-5xl font-extrabold text-white">Operational Domains</h3>
+                    <h2 class="text-xs md:text-sm font-bold text-asg-accent uppercase tracking-widest mb-2">Our Capabilities</h2>
+                    <h3 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">Operational Domains</h3>
                 </div>
-                <p class="text-slate-400 max-w-md mt-6 md:mt-0">We specialize in dynamic threat environments, ensuring business continuity through specialized divisions.</p>
+                <p class="text-slate-400 text-sm md:text-base max-w-md mt-4 md:mt-0">We specialize in dynamic threat environments, ensuring business continuity through specialized divisions.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Service 1 -->
-                <div class="service-card bg-asg-card p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-100 group">
-                    <i class="fas fa-building text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-6"></i>
-                    <h4 class="text-xl font-bold text-white mb-3">Corporate Security</h4>
-                    <p class="text-sm text-slate-400 leading-relaxed">Front-of-house concierge, access control, and executive protection tailored for corporate HQs.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <!-- Services -->
+                <div class="service-card bg-asg-card p-6 md:p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-100 group">
+                    <i class="fas fa-building text-3xl md:text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-4 md:mb-6"></i>
+                    <h4 class="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Corporate Security</h4>
+                    <p class="text-xs md:text-sm text-slate-400 leading-relaxed">Front-of-house concierge, access control, and executive protection tailored for corporate HQs.</p>
                 </div>
-                <!-- Service 2 -->
-                <div class="service-card bg-asg-card p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-200 group">
-                    <i class="fas fa-store-slash text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-6"></i>
-                    <h4 class="text-xl font-bold text-white mb-3">Retail Loss Prevention</h4>
-                    <p class="text-sm text-slate-400 leading-relaxed">Overt and covert operatives trained in conflict management and asset retention.</p>
+                <div class="service-card bg-asg-card p-6 md:p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-200 group">
+                    <i class="fas fa-store-slash text-3xl md:text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-4 md:mb-6"></i>
+                    <h4 class="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Retail Loss Prevention</h4>
+                    <p class="text-xs md:text-sm text-slate-400 leading-relaxed">Overt and covert operatives trained in conflict management and asset retention.</p>
                 </div>
-                <!-- Service 3 -->
-                <div class="service-card bg-asg-card p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-300 group">
-                    <i class="fas fa-users-viewfinder text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-6"></i>
-                    <h4 class="text-xl font-bold text-white mb-3">Event Security</h4>
-                    <p class="text-sm text-slate-400 leading-relaxed">Crowd dynamics management, perimeter defense, and rapid response for large-scale venues.</p>
+                <div class="service-card bg-asg-card p-6 md:p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-300 group">
+                    <i class="fas fa-users-viewfinder text-3xl md:text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-4 md:mb-6"></i>
+                    <h4 class="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Event Security</h4>
+                    <p class="text-xs md:text-sm text-slate-400 leading-relaxed">Crowd dynamics management, perimeter defense, and rapid response for large-scale venues.</p>
                 </div>
-                <!-- Service 4 -->
-                <div class="service-card bg-asg-card p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-400 group">
-                    <i class="fas fa-user-secret text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-6"></i>
-                    <h4 class="text-xl font-bold text-white mb-3">Close Protection</h4>
-                    <p class="text-sm text-slate-400 leading-relaxed">Elite bodyguard services for VIPs, executives, and high-net-worth individuals.</p>
+                <div class="service-card bg-asg-card p-6 md:p-8 rounded-xl border border-slate-800 hover:border-asg-accent transition-all duration-300 scroll-reveal delay-400 group">
+                    <i class="fas fa-user-secret text-3xl md:text-4xl text-slate-500 group-hover:text-asg-accent transition-colors mb-4 md:mb-6"></i>
+                    <h4 class="text-lg md:text-xl font-bold text-white mb-2 md:mb-3">Close Protection</h4>
+                    <p class="text-xs md:text-sm text-slate-400 leading-relaxed">Elite bodyguard services for VIPs, executives, and high-net-worth individuals.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- About Section -->
-    <section id="about" class="py-24 px-6 bg-slate-900 border-y border-slate-800 relative">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div class="space-y-8 scroll-reveal">
-                <h2 class="text-sm font-bold text-asg-accent uppercase tracking-widest">Why Choose ASG</h2>
-                <h3 class="text-4xl md:text-5xl font-extrabold text-white leading-tight">Beyond Standard Guarding.</h3>
-                <p class="text-slate-300 text-lg leading-relaxed">
+    <section id="about" class="py-16 md:py-24 px-4 md:px-6 bg-slate-900 border-y border-slate-800 relative">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16 items-center">
+            <div class="space-y-6 md:space-y-8 scroll-reveal">
+                <h2 class="text-xs md:text-sm font-bold text-asg-accent uppercase tracking-widest">Why Choose ASG</h2>
+                <h3 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">Beyond Standard Guarding.</h3>
+                <p class="text-slate-300 text-base md:text-lg leading-relaxed">
                     At ASG, we don't just fill uniforms. We deploy highly trained professionals backed by rigorous vetting, continuous training, and advanced incident reporting technology.
                 </p>
-                <ul class="space-y-4">
+                <ul class="space-y-3 md:space-y-4 text-sm md:text-base">
                     <li class="flex items-center text-slate-300">
-                        <i class="fas fa-check-circle text-asg-accent mr-4 text-xl"></i> BS7858 Standard Vetting
+                        <i class="fas fa-check-circle text-asg-accent mr-3 md:mr-4 text-lg md:text-xl flex-shrink-0"></i> BS7858 Standard Vetting
                     </li>
                     <li class="flex items-center text-slate-300">
-                        <i class="fas fa-check-circle text-asg-accent mr-4 text-xl"></i> GPS Monitored Patrols
+                        <i class="fas fa-check-circle text-asg-accent mr-3 md:mr-4 text-lg md:text-xl flex-shrink-0"></i> GPS Monitored Patrols
                     </li>
                     <li class="flex items-center text-slate-300">
-                        <i class="fas fa-check-circle text-asg-accent mr-4 text-xl"></i> Ex-Military & Law Enforcement Personnel
+                        <i class="fas fa-check-circle text-asg-accent mr-3 md:mr-4 text-lg md:text-xl flex-shrink-0"></i> Ex-Military & Law Enforcement Personnel
                     </li>
                 </ul>
             </div>
-            <div class="relative scroll-reveal delay-200">
-                <div class="absolute inset-0 bg-asg-accent rounded-xl transform translate-x-4 translate-y-4 opacity-50"></div>
-                <img src="https://images.unsplash.com/photo-1629904853716-f0bc54eea481?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="ASG Operations" class="relative rounded-xl border border-slate-700 shadow-2xl z-10 w-full object-cover h-[500px]" />
+            <div class="relative scroll-reveal delay-200 mt-8 lg:mt-0">
+                <div class="absolute inset-0 bg-asg-accent rounded-xl transform translate-x-3 translate-y-3 md:translate-x-4 md:translate-y-4 opacity-50"></div>
+                <img src="https://images.unsplash.com/photo-1629904853716-f0bc54eea481?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="ASG Operations" class="relative rounded-xl border border-slate-700 shadow-2xl z-10 w-full object-cover h-[300px] md:h-[500px]" />
             </div>
         </div>
     </section>
 
     <!-- Interactive Portal Area -->
-    <section id="portal" class="py-24 px-6 relative bg-asg-dark">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-asg-accent/5 blur-[120px]"></div>
+    <section id="portal" class="py-16 md:py-24 px-4 md:px-6 relative bg-asg-dark">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full md:w-3/4 h-32 bg-asg-accent/5 blur-[80px] md:blur-[120px]"></div>
         <div class="max-w-4xl mx-auto relative z-10">
-            <div class="text-center mb-12 scroll-reveal">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">ASG Command Portal</h2>
-                <p class="text-slate-400">Initiate a client deployment request or submit your tactical personnel application.</p>
+            <div class="text-center mb-10 md:mb-12 scroll-reveal">
+                <h2 class="text-2xl md:text-4xl font-bold mb-3 md:mb-4 text-white">ASG Command Portal</h2>
+                <p class="text-sm md:text-base text-slate-400">Initiate a client deployment request or submit your tactical personnel application.</p>
             </div>
 
             <!-- Tab Switcher -->
-            <div class="flex p-1 bg-asg-card border border-slate-700 rounded mb-12 shadow-lg scroll-reveal">
-                <button id="tab-client" onclick="switchTab('client')" class="flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all duration-300 bg-asg-accent text-asg-dark shadow-md rounded-sm">
+            <div class="flex flex-col sm:flex-row p-1 bg-asg-card border border-slate-700 rounded mb-8 md:mb-12 shadow-lg scroll-reveal gap-1 sm:gap-0">
+                <button id="tab-client" onclick="switchTab('client')" class="flex-1 py-3 md:py-4 text-[11px] md:text-sm font-bold uppercase tracking-widest transition-all duration-300 bg-asg-accent text-asg-dark shadow-md rounded-sm">
                     <i class="fas fa-briefcase mr-2"></i> Client Request
                 </button>
-                <button id="tab-guard" onclick="switchTab('guard')" class="flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all duration-300 text-slate-400 hover:text-white rounded-sm">
-                    <i class="fas fa-id-badge mr-2"></i> Personnel Application
+                <button id="tab-guard" onclick="switchTab('guard')" class="flex-1 py-3 md:py-4 text-[11px] md:text-sm font-bold uppercase tracking-widest transition-all duration-300 text-slate-400 hover:text-white rounded-sm">
+                    <i class="fas fa-id-badge mr-2"></i> Personnel App
                 </button>
             </div>
 
             <!-- Form Container -->
-            <div class="bg-asg-card/80 border border-slate-700 p-8 md:p-12 rounded-xl shadow-2xl relative scroll-reveal backdrop-blur-md">
+            <div class="bg-asg-card/80 border border-slate-700 p-6 md:p-12 rounded-xl shadow-2xl relative scroll-reveal backdrop-blur-md">
                 
                 <!-- Client Form -->
-                <form id="form-client" class="space-y-6">
+                <form id="form-client" class="space-y-5 md:space-y-6">
                     <input type="hidden" name="formType" value="client">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Company Name</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Company Name</label>
                             <input type="text" name="companyName" required class="form-input">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Contact Person</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Contact Person</label>
                             <input type="text" name="contactName" required class="form-input">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Corporate Email</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Corporate Email</label>
                             <input type="email" name="email" required class="form-input">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Phone Number</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Phone Number</label>
                             <input type="tel" name="phone" required class="form-input">
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Required Operation Type</label>
+                        <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Required Operation Type</label>
                         <select name="guardType" class="form-input">
                             <option value="corporate">Corporate & Front of House</option>
                             <option value="retail">Loss Prevention & Retail</option>
@@ -223,54 +235,54 @@
                         </select>
                     </div>
                     <div class="space-y-2">
-                        <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Deployment Details / Scope</label>
+                        <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Deployment Details / Scope</label>
                         <textarea name="requirements" rows="4" required placeholder="Specify dates, location, and operational requirements..." class="form-input resize-none"></textarea>
                     </div>
-                    <button type="submit" class="w-full py-4 bg-asg-accent hover:bg-asg-accentHover text-asg-dark font-bold uppercase tracking-widest rounded transition-all duration-300 flex justify-center items-center">
-                        <i class="fas fa-paper-plane mr-3"></i> Submit Client Request
+                    <button type="submit" class="w-full py-4 bg-asg-accent hover:bg-asg-accentHover text-asg-dark font-bold uppercase tracking-widest rounded transition-all duration-300 flex justify-center items-center text-xs md:text-sm">
+                        <i class="fas fa-paper-plane mr-2 md:mr-3"></i> Submit Request
                     </button>
                 </form>
 
                 <!-- Guard Application Form -->
-                <form id="form-guard" class="space-y-6 hidden">
+                <form id="form-guard" class="space-y-5 md:space-y-6 hidden">
                     <input type="hidden" name="formType" value="guard">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Full Name</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Full Name</label>
                             <input type="text" name="fullName" required class="form-input">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Email Address</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Email Address</label>
                             <input type="email" name="email" required class="form-input">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Phone Number</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Phone Number</label>
                             <input type="tel" name="phone" required class="form-input">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Base Location (UK City)</label>
-                            <input type="text" name="location" required placeholder="e.g. London, Manchester" class="form-input">
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Base Location</label>
+                            <input type="text" name="location" required placeholder="e.g. London" class="form-input">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">SIA License Number</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">SIA License Number</label>
                             <input type="text" name="siaLicense" required placeholder="16-digit code" class="form-input">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">SIA Expiry Date</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">SIA Expiry Date</label>
                             <input type="date" name="licenseExpiry" required class="form-input">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Years of Experience</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Years Exp</label>
                             <input type="number" name="experience" min="0" required class="form-input">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Right to Work in UK?</label>
+                            <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">UK Right to Work</label>
                             <select name="rightToWork" class="form-input">
                                 <option value="yes">Yes, Citizen / Valid Visa</option>
                                 <option value="no">No</option>
@@ -278,19 +290,19 @@
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <label class="text-xs uppercase font-bold tracking-wider text-slate-400">Vetting / Operational Background</label>
-                        <textarea name="additionalInfo" rows="4" placeholder="Detail prior deployments, military, or police background..." class="form-input resize-none"></textarea>
+                        <label class="text-[10px] md:text-xs uppercase font-bold tracking-wider text-slate-400">Vetting Background</label>
+                        <textarea name="additionalInfo" rows="4" placeholder="Detail prior deployments..." class="form-input resize-none"></textarea>
                     </div>
-                    <button type="submit" class="w-full py-4 bg-slate-200 hover:bg-white text-asg-dark font-bold uppercase tracking-widest rounded transition-all duration-300 flex justify-center items-center">
-                        <i class="fas fa-shield-cat mr-3"></i> Submit Personnel Application
+                    <button type="submit" class="w-full py-4 bg-slate-200 hover:bg-white text-asg-dark font-bold uppercase tracking-widest rounded transition-all duration-300 flex justify-center items-center text-xs md:text-sm">
+                        <i class="fas fa-shield-cat mr-2 md:mr-3"></i> Submit Application
                     </button>
                 </form>
 
                 <!-- Processing Overlay -->
                 <div id="form-overlay" class="absolute inset-0 bg-asg-card/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center space-y-4 opacity-0 pointer-events-none transition-opacity duration-300 z-20">
-                    <div id="overlay-spinner" class="w-16 h-16 border-4 border-slate-600 border-t-asg-accent rounded-full animate-spin"></div>
-                    <div id="overlay-icon" class="hidden text-6xl text-asg-accent"><i class="fas fa-check-circle"></i></div>
-                    <p id="overlay-message" class="text-sm tracking-widest uppercase font-bold text-white mt-4">Encrypting & Transmitting...</p>
+                    <div id="overlay-spinner" class="w-12 h-12 md:w-16 md:h-16 border-4 border-slate-600 border-t-asg-accent rounded-full animate-spin"></div>
+                    <div id="overlay-icon" class="hidden text-5xl md:text-6xl text-asg-accent"><i class="fas fa-check-circle"></i></div>
+                    <p id="overlay-message" class="text-xs md:text-sm tracking-widest uppercase font-bold text-white mt-4 text-center px-4">Encrypting & Transmitting...</p>
                 </div>
 
             </div>
@@ -307,21 +319,20 @@
             
             <!-- Contact Details -->
             <div class="text-slate-500 text-sm font-semibold tracking-wide text-center">
-                <div class="mb-3 uppercase text-xs tracking-widest">&copy; 2026 Advanced Security Group UK. All Rights Reserved.</div>
-                <div class="flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-6">
+                <div class="mb-3 uppercase text-[10px] md:text-xs tracking-widest">&copy; 2026 Advanced Security Group UK. All Rights Reserved.</div>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-3 md:space-y-0 md:space-x-6">
                     <a href="mailto:info@asguk.ltd" class="hover:text-asg-accent transition-colors flex items-center">
                         <i class="fas fa-envelope mr-2"></i> info@asguk.ltd
                     </a>
                     <a href="tel:+441234567890" class="hover:text-asg-accent transition-colors flex items-center">
-                        <i class="fas fa-phone mr-2"></i> +44 7446 945293
+                        <i class="fas fa-phone mr-2"></i> +44 123 456 7890
                     </a>
                 </div>
             </div>
 
             <!-- Social Links -->
             <div class="flex space-x-6 text-slate-500">
-                <!-- Replace # with your actual Facebook Page URL when ready -->
-                <a href="https://www.facebook.com/profile.php?id=61592325028223" target="_blank" class="hover:text-asg-accent transition-colors">
+                <a href="#" target="_blank" class="hover:text-asg-accent transition-colors">
                     <i class="fab fa-facebook text-2xl"></i>
                 </a>
             </div>
