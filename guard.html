@@ -55,9 +55,16 @@
     <!-- MAIN APP SCREEN (Hidden by default) -->
     <div id="app-screen" class="hidden h-full w-full flex flex-col">
         <!-- Topbar -->
-        <header class="bg-asg-card py-4 px-6 flex justify-between items-center border-b border-slate-800">
-            <div class="font-bold tracking-widest">TACTICAL DASHBOARD</div>
-            <button onclick="logout()" class="text-slate-400 hover:text-white"><i class="fas fa-sign-out-alt text-xl"></i></button>
+        <header class="bg-asg-card py-4 px-4 md:px-6 flex justify-between items-center border-b border-slate-800 shadow-md">
+            <div class="flex items-center space-x-4">
+                <a href="index.html" class="text-slate-400 hover:text-asg-accent transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-800">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div class="font-bold tracking-widest text-sm md:text-base text-white">TACTICAL DASHBOARD</div>
+            </div>
+            <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-800">
+                <i class="fas fa-power-off text-lg"></i>
+            </button>
         </header>
 
         <!-- Main Content Area -->
@@ -106,14 +113,19 @@
         </main>
 
         <!-- Bottom Navigation -->
-        <nav class="bg-asg-card border-t border-slate-800 flex justify-around py-4 pb-6">
-            <button onclick="switchView('dashboard')" id="nav-dash" class="text-asg-accent flex flex-col items-center">
-                <i class="fas fa-gps-fixed text-2xl mb-1"></i>
-                <span class="text-xs uppercase tracking-widest">Duty</span>
+        <nav class="bg-asg-card border-t border-slate-800 flex justify-around py-3 pb-6 md:pb-4 relative z-10 shadow-[0_-5px_15px_rgba(0,0,0,0.3)]">
+            <!-- Duty Tab -->
+            <button onclick="switchView('dashboard')" id="nav-dash" class="relative flex-1 flex flex-col items-center justify-center text-asg-accent group transition-all duration-300 py-2">
+                <div id="nav-dash-bg" class="absolute inset-0 bg-asg-accent/10 rounded-xl mx-2 md:mx-12 transition-all duration-300"></div>
+                <i id="nav-dash-icon" class="fas fa-crosshairs text-2xl mb-1 relative z-10 transition-transform duration-300 group-active:scale-90"></i>
+                <span class="text-[10px] uppercase tracking-widest font-bold relative z-10">Duty</span>
             </button>
-            <button onclick="switchView('history')" id="nav-hist" class="text-slate-500 flex flex-col items-center">
-                <i class="fas fa-list text-2xl mb-1"></i>
-                <span class="text-xs uppercase tracking-widest">History</span>
+            
+            <!-- History Tab -->
+            <button onclick="switchView('history')" id="nav-hist" class="relative flex-1 flex flex-col items-center justify-center text-slate-500 group transition-all duration-300 py-2">
+                <div id="nav-hist-bg" class="absolute inset-0 bg-transparent rounded-xl mx-2 md:mx-12 transition-all duration-300"></div>
+                <i id="nav-hist-icon" class="fas fa-clipboard-list text-2xl mb-1 relative z-10 transition-transform duration-300 group-active:scale-90"></i>
+                <span class="text-[10px] uppercase tracking-widest font-bold relative z-10">History</span>
             </button>
         </nav>
     </div>
@@ -389,24 +401,42 @@
     }
 
     // ==========================================
-    // VIEW NAVIGATION
+    // VIEW NAVIGATION & UI
     // ==========================================
     function switchView(view) {
         const dash = document.getElementById('tab-dashboard');
         const hist = document.getElementById('tab-history');
+        
         const navDash = document.getElementById('nav-dash');
+        const navDashBg = document.getElementById('nav-dash-bg');
+        
         const navHist = document.getElementById('nav-hist');
+        const navHistBg = document.getElementById('nav-hist-bg');
 
         if (view === 'dashboard') {
+            // Show Dashboard
             dash.classList.remove('hidden');
             hist.classList.add('hidden');
+            
+            // Highlight Duty Tab
             navDash.classList.replace('text-slate-500', 'text-asg-accent');
+            navDashBg.classList.replace('bg-transparent', 'bg-asg-accent/10');
+            
+            // Dim History Tab
             navHist.classList.replace('text-asg-accent', 'text-slate-500');
+            navHistBg.classList.replace('bg-asg-accent/10', 'bg-transparent');
         } else {
+            // Show History
             dash.classList.add('hidden');
             hist.classList.remove('hidden');
+            
+            // Highlight History Tab
             navHist.classList.replace('text-slate-500', 'text-asg-accent');
+            navHistBg.classList.replace('bg-transparent', 'bg-asg-accent/10');
+            
+            // Dim Duty Tab
             navDash.classList.replace('text-asg-accent', 'text-slate-500');
+            navDashBg.classList.replace('bg-asg-accent/10', 'bg-transparent');
         }
     }
 </script>
