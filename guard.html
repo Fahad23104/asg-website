@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASG | Guard Terminal</title>
+    
+    <!-- Tailwind & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs (Compat version for simple HTML integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        asg: {
+                            dark: '#0f172a', card: '#1e293b', accent: '#f59e0b', accentHover: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .form-input { width: 100%; background-color: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 4px; padding: 1rem; color: white; }
+        .form-input:focus { outline: none; border-color: #f59e0b; }
+        /* Hide scrollbar for a cleaner app feel */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="absolute inset-0 z-50 bg-asg-dark flex flex-col justify-center items-center px-6">
+        <i class="fas fa-shield-moon text-6xl text-asg-accent mb-6"></i>
+        <h1 class="text-2xl font-bold tracking-widest mb-8">ASG COMMAND</h1>
+        
+        <div class="w-full max-w-sm space-y-4">
+            <input type="email" id="email" placeholder="Assigned Email" class="form-input">
+            <input type="password" id="password" placeholder="Password" class="form-input">
+            <p id="auth-error" class="text-red-500 text-sm hidden"></p>
+            <button onclick="login()" class="w-full py-4 bg-asg-accent text-black font-bold uppercase tracking-widest rounded mt-4">
+                Authenticate
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN (Hidden by default) -->
+    <div id="app-screen" class="hidden h-full w-full flex flex-col">
+        <!-- Topbar -->
+        <header class="bg-asg-card py-4 px-6 flex justify-between items-center border-b border-slate-800">
+            <div class="font-bold tracking-widest">TACTICAL DASHBOARD</div>
+            <button onclick="logout()" class="text-slate-400 hover:text-white"><i class="fas fa-sign-out-alt text-xl"></i></button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 relative">
+            
+            <!-- Dashboard Tab -->
+            <div id="tab-dashboard" class="flex flex-col items-center justify-center h-full">
+                <div id="status-text" class="text-slate-400 font-bold tracking-widest mb-10 text-center uppercase">Standby - Ready for Deployment</div>
+                
+                <button id="duty-btn" onclick="toggleDuty()" class="w-64 h-64 rounded-full border-4 border-green-500 bg-green-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none">
+                    <i id="duty-icon" class="fas fa-play-circle text-6xl text-green-500 mb-4"></i>
+                    <span id="duty-label" class="text-xl font-bold text-green-500 tracking-widest">CHECK IN</span>
+                </button>
+            </div>
+
+            <!-- History Tab -->
+            <div id="tab-history" class="hidden h-full flex flex-col">
+                <h2 class="text-asg-accent font-bold uppercase tracking-widest mb-4">Recent Deployments</h2>
+                <div id="history-list" class="space-y-4 flex-1 overflow-y-auto pb-20">
+                    <!-- Shift cards injected here via JS -->
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bg-asg-card border-t border-slate-800 flex justify-around py-4 pb-6">
+            <button onclick="switchView('dashboard')" id="nav-dash" class="text-asg-accent flex flex-col items-center">
+                <i class="fas fa-gps-fixed text-2xl mb-1"></i>
+                <span class="text-xs uppercase tracking-widest">Duty</span>
+            </button>
+            <button onclick="switchView('history')" id="nav-hist" class="text-slate-500 flex flex-col items-center">
+                <i class="fas fa-list text-2xl mb-1"></i>
+                <span class="text-xs uppercase tracking-widest">History</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ADD YOUR FIREBASE CONFIG HERE
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let isOnDuty = false;
+        let currentShiftId = null;
+
+        // ==========================================
+        // AUTHENTICATION LOGIC
+        // ==========================================
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                loadHistory();
+            } else {
+                currentUser = null;
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-screen').classList.add('hidden');
+            }
+        });
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const errEl = document.getElementById('auth-error');
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+                errEl.classList.add('hidden');
+            } catch (e) {
+                errEl.textContent = e.message;
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        function logout() { auth.signOut(); }
+
+        // ==========================================
+        // GPS & DUTY LOGIC
+        // ==========================================
+        async function toggleDuty() {
+            const btn = document.getElementById('duty-btn');
+            const icon = document.getElementById('duty-icon');
+            const label = document.getElementById('duty-label');
+            const status = document.getElementById('status-text');
+
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser");
+                return;
+            }
+
+            // Grab GPS via Browser
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                if (!isOnDuty) {
+                    // CHECK IN
+                    const docRef = await db.collection('shifts').add({
+                        guardId: currentUser.uid,
+                        guardEmail: currentUser.email,
+                        checkInTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        checkInLat: lat,
+                        checkInLng: lng,
+                        status: 'active'
+                    });
+                    currentShiftId = docRef.id;
+                    isOnDuty = true;
+
+                    // Update UI to Red / Active
+                    btn.className = "w-64 h-64 rounded-full border-4 border-red-500 bg-red-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none";
+                    icon.className = "fas fa-stop-circle text-6xl text-red-500 mb-4";
+                    label.className = "text-xl font-bold text-red-500 tracking-widest";
+                    label.textContent = "CHECK OUT";
+                    status.textContent = "DUTY ACTIVE - GPS LOGGED";
+                    status.classList.replace('text-slate-400', 'text-red-500');
+
+                } else {
+                    // CHECK OUT
+                    if (currentShiftId) {
+                        await db.collection('shifts').doc(currentShiftId).update({
+                            checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
+                            checkOutLat: lat,
+                            checkOutLng: lng,
+                            status: 'completed'
+                        });
+                        currentShiftId = null;
+                        isOnDuty = false;
+
+                        // Update UI to Green / Standby
+                        btn.className = "w-64 h-64 rounded-full border-4 border-green-500 bg-green-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none";
+                        icon.className = "fas fa-play-circle text-6xl text-green-500 mb-4";
+                        label.className = "text-xl font-bold text-green-500 tracking-widest";
+                        label.textContent = "CHECK IN";
+                        status.textContent = "Standby - Ready for Deployment";
+                        status.classList.replace('text-red-500', 'text-slate-400');
+                    }
+                }
+            }, (error) => {
+                alert("Please allow location permissions to deploy.");
+            });
+        }
+
+        // ==========================================
+        // HISTORY VIEW & NAVIGATION
+        // ==========================================
+        function switchView(view) {
+            const dash = document.getElementById('tab-dashboard');
+            const hist = document.getElementById('tab-history');
+            const navDash = document.getElementById('nav-dash');
+            const navHist = document.getElementById('nav-hist');
+
+            if (view === 'dashboard') {
+                dash.classList.remove('hidden');
+                hist.classList.add('hidden');
+                navDash.classList.replace('text-slate-500', 'text-asg-accent');
+                navHist.classList.replace('text-asg-accent', 'text-slate-500');
+            } else {
+                dash.classList.add('hidden');
+                hist.classList.remove('hidden');
+                navHist.classList.replace('text-slate-500', 'text-asg-accent');
+                navDash.classList.replace('text-asg-accent', 'text-slate-500');
+            }
+        }
+
+        function loadHistory() {
+            db.collection('shifts')
+              .where('guardId', '==', currentUser.uid)
+              .orderBy('checkInTime', 'desc')
+              .limit(20)
+              .onSnapshot(snapshot => {
+                  const list = document.getElementById('history-list');
+                  list.innerHTML = ''; // clear
+
+                  snapshot.forEach(doc => {
+                      const data = doc.data();
+                      if(!data.checkInTime) return; // skip pending
+                      
+                      const checkInDate = data.checkInTime.toDate();
+                      const dateStr = checkInDate.toLocaleDateString();
+                      
+                      let outStr = 'ACTIVE';
+                      let durStr = 'Ongoing';
+                      let iconColor = 'text-green-500';
+
+                      if (data.checkOutTime) {
+                          const checkOutDate = data.checkOutTime.toDate();
+                          outStr = checkOutDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                          const diffMins = Math.floor((checkOutDate - checkInDate) / 60000);
+                          durStr = `${Math.floor(diffMins/60)}h ${diffMins%60}m`;
+                          iconColor = 'text-asg-accent';
+                      }
+
+                      const html = `
+                          <div class="bg-asg-card p-4 rounded border border-slate-700 flex justify-between items-center">
+                              <div class="flex items-center space-x-4">
+                                  <i class="fas fa-clock ${iconColor} text-2xl"></i>
+                                  <div>
+                                      <div class="font-bold">${dateStr}</div>
+                                      <div class="text-xs text-slate-400">In: ${checkInDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - Out: ${outStr}</div>
+                                  </div>
+                              </div>
+                              <div class="font-bold text-lg">${durStr}</div>
+                          </div>
+                      `;
+                      list.innerHTML += html;
+                  });
+              });
+        }
+    </script>
+</body>
+</html>
