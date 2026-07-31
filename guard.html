@@ -431,6 +431,9 @@
     // ==========================================
     // FINALIZE DUTY (GPS + Storage + Firestore)
     // ==========================================
+    // ==========================================
+    // FINALIZE DUTY (GPS + Firestore Only)
+    // ==========================================
     async function finalizeDutyState(base64PhotoData) {
         const dutyBtn = document.getElementById('duty-btn');
         const icon = document.getElementById('duty-icon');
@@ -443,6 +446,7 @@
         label.textContent = 'GETTING GPS...';
         dutyBtn.disabled = true;
 
+        // Reverted to your original GPS request format without strict timeouts
         navigator.geolocation.getCurrentPosition(async (position) => {
             try {
                 label.textContent = 'SAVING DATABASE...';
@@ -465,12 +469,12 @@
                         await db.collection('shifts').doc(currentShiftId).update({
                             checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
                             checkOutMapUrl: mapLink,
-                            checkOutPhotoData: base64PhotoData, // Saved as text string directly in database
+                            checkOutPhotoData: base64PhotoData, 
                             status: 'completed'
                         });
                     }
                 }
-                // Success! 
+                // Success! The Firestore listener will automatically update the UI.
             } catch (error) {
                 console.error("Deployment update failed:", error);
                 alert("Database Error: " + error.message);
@@ -481,11 +485,11 @@
                 dutyBtn.disabled = false;
             }
         }, (error) => {
-            alert("GPS Error: " + error.message + " (Please ensure location services are turned on).");
+            alert("Location permission is required to check in/out.");
             icon.className = prevIconClass;
             label.textContent = prevLabelText;
             dutyBtn.disabled = false;
-        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }); 
+        }); 
     }
 
     // ==========================================
