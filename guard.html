@@ -9,14 +9,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Firebase SDKs (Compat version for simple HTML integration) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <!-- ADDED: Firebase Storage for saving photos -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-    <!-- ADDED: Face-API.js for facial detection -->
+    <!-- Face-API.js -->
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
     <script>
@@ -24,9 +23,7 @@
             theme: {
                 extend: {
                     colors: {
-                        asg: {
-                            dark: '#0f172a', card: '#1e293b', accent: '#f59e0b', accentHover: '#d97706',
-                        }
+                        asg: { dark: '#0f172a', card: '#1e293b', accent: '#f59e0b', accentHover: '#d97706' }
                     }
                 }
             }
@@ -56,7 +53,7 @@
         </div>
     </div>
 
-    <!-- NEW: CAMERA OVERLAY MODAL -->
+    <!-- CAMERA OVERLAY MODAL -->
     <div id="camera-modal" class="hidden absolute inset-0 z-[100] bg-asg-dark flex flex-col items-center justify-center p-6">
         <h2 class="text-xl font-bold mb-4 text-asg-accent tracking-widest uppercase">Identity Verification</h2>
         <p class="text-slate-400 text-sm mb-6 text-center">Please ensure your face is clearly visible to authorize deployment.</p>
@@ -75,9 +72,8 @@
         </div>
     </div>
 
-    <!-- MAIN APP SCREEN (Hidden by default) -->
+    <!-- MAIN APP SCREEN -->
     <div id="app-screen" class="hidden h-full w-full flex flex-col">
-        <!-- Topbar -->
         <header class="bg-asg-card py-4 px-4 md:px-6 flex justify-between items-center border-b border-slate-800 shadow-md">
             <div class="flex items-center space-x-4">
                 <a href="index.html" class="text-slate-400 hover:text-asg-accent transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-800">
@@ -90,7 +86,6 @@
             </button>
         </header>
 
-        <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto p-6 relative">
             
             <!-- Dashboard Tab -->
@@ -107,7 +102,6 @@
             <div id="tab-history" class="hidden h-full flex flex-col">
                 <h2 class="text-asg-accent font-bold uppercase tracking-widest mb-4 text-sm">Duty Summary</h2>
                 
-                <!-- Statistics Grid -->
                 <div class="grid grid-cols-2 gap-3 mb-6">
                     <div class="bg-asg-card p-3 rounded-lg border border-slate-700 text-center shadow-lg">
                         <div class="text-[10px] text-slate-400 uppercase tracking-widest mb-1 font-bold">24 Hours</div>
@@ -128,14 +122,11 @@
                 </div>
 
                 <h2 class="text-asg-accent font-bold uppercase tracking-widest mb-4 text-sm">Recent Deployments</h2>
-                <div id="history-list" class="space-y-3 flex-1 overflow-y-auto pb-20 pr-1">
-                    <!-- Shift cards injected here via JS -->
-                </div>
+                <div id="history-list" class="space-y-3 flex-1 overflow-y-auto pb-20 pr-1"></div>
             </div>
 
         </main>
 
-        <!-- Bottom Navigation -->
         <nav class="bg-asg-card border-t border-slate-800 flex justify-around py-3 pb-6 md:pb-4 relative z-10 shadow-[0_-5px_15px_rgba(0,0,0,0.3)]">
             <button onclick="switchView('dashboard')" id="nav-dash" class="relative flex-1 flex flex-col items-center justify-center text-asg-accent group transition-all duration-300 py-2">
                 <div id="nav-dash-bg" class="absolute inset-0 bg-asg-accent/10 rounded-xl mx-2 md:mx-12 transition-all duration-300"></div>
@@ -153,7 +144,7 @@
 
     <script>
     // ==========================================
-    // 1. YOUR FIREBASE CONFIG
+    // 1. FIREBASE CONFIG
     // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyB0APzpLavq-760Tqonk-1QBFJ548iHIH4",
@@ -167,7 +158,7 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    const storage = firebase.storage(); // Added Storage initialization
+    const storage = firebase.storage();
 
     let currentUser = null;
     let isOnDuty = false;
@@ -179,11 +170,9 @@
     let modelsLoaded = false;
     async function loadFaceModels() {
         try {
-            // Load tiny face detector model from a reliable public CDN
             const MODEL_URL = 'https://vladmandic.github.io/face-api/model/';
             await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
             modelsLoaded = true;
-            console.log("Face API security models loaded successfully.");
         } catch (e) {
             console.error("Failed to load facial recognition models:", e);
         }
@@ -221,9 +210,6 @@
 
     function logout() { auth.signOut(); }
 
-    // ==========================================
-    // REALTIME SYNC & CLIENT-SIDE HISTORY
-    // ==========================================
     function syncGuardStateAndHistory() {
         db.collection('shifts')
           .where('guardId', '==', currentUser.uid)
@@ -234,36 +220,21 @@
               let shifts = [];
               let activeShift = null;
 
-              let totalMs24h = 0;
-              let totalMs7d = 0;
-              let totalMs30d = 0;
-              let totalMs365d = 0;
-
+              let totalMs24h = 0, totalMs7d = 0, totalMs30d = 0, totalMs365d = 0;
               const now = new Date();
-              const ms24h = 24 * 60 * 60 * 1000;
-              const ms7d = 7 * ms24h;
-              const ms30d = 30 * ms24h;
-              const ms365d = 365 * ms24h;
+              const ms24h = 24 * 60 * 60 * 1000, ms7d = 7 * ms24h, ms30d = 30 * ms24h, ms365d = 365 * ms24h;
 
               snapshot.forEach(doc => {
                   const data = doc.data();
                   data.id = doc.id;
                   shifts.push(data);
 
-                  if (data.status === 'active') {
-                      activeShift = data;
-                  }
+                  if (data.status === 'active') activeShift = data;
 
                   if (data.checkInTime) {
                       const checkInDate = data.checkInTime.toDate();
                       const timeSinceCheckIn = now - checkInDate;
-                      
-                      let shiftDurationMs = 0;
-                      if (data.checkOutTime) {
-                          shiftDurationMs = data.checkOutTime.toDate() - checkInDate;
-                      } else {
-                          shiftDurationMs = now - checkInDate;
-                      }
+                      let shiftDurationMs = data.checkOutTime ? (data.checkOutTime.toDate() - checkInDate) : (now - checkInDate);
 
                       if (timeSinceCheckIn <= ms24h) totalMs24h += shiftDurationMs;
                       if (timeSinceCheckIn <= ms7d) totalMs7d += shiftDurationMs;
@@ -324,23 +295,9 @@
                       let diffMs = checkOutDate - checkInDate;
                       let diffMins = Math.floor(diffMs / 60000);
                       let diffHrs = Math.floor(diffMins / 60);
-                      let diffDays = Math.floor(diffHrs / 24);
-                      let diffMonths = Math.floor(diffDays / 30);
-                      let diffYears = Math.floor(diffMonths / 12);
-
                       let mins = diffMins % 60;
-                      let hrs = diffHrs % 24;
-                      let days = diffDays % 30;
-                      let mos = diffMonths % 12;
 
-                      let durParts = [];
-                      if (diffYears > 0) durParts.push(`${diffYears}y`);
-                      if (mos > 0) durParts.push(`${mos}mo`);
-                      if (days > 0) durParts.push(`${days}d`);
-                      if (hrs > 0) durParts.push(`${hrs}h`);
-                      if (mins > 0 || durParts.length === 0) durParts.push(`${mins}m`);
-
-                      durStr = durParts.join(' ');
+                      durStr = `${diffHrs}h ${mins}m`;
                       iconColor = 'text-asg-accent';
                   }
 
@@ -358,9 +315,7 @@
                   `;
                   list.innerHTML += html;
               });
-          }, error => {
-              console.error("Firestore sync error:", error);
-          });
+          }, error => console.error("Firestore sync error:", error));
     }
 
     function updateDutyUI(active) {
@@ -368,6 +323,9 @@
         const icon = document.getElementById('duty-icon');
         const label = document.getElementById('duty-label');
         const status = document.getElementById('status-text');
+
+        // Prevent crash if elements are missing
+        if (!icon || !label) return;
 
         if (active) {
             btn.className = "w-48 h-48 md:w-64 md:h-64 mx-auto rounded-full border-4 border-red-500 bg-red-500/20 flex flex-col items-center justify-center transition-all duration-300 outline-none shadow-[0_0_30px_rgba(239,68,68,0.2)]";
@@ -402,12 +360,12 @@
             return;
         }
 
-        // Test location permissions before opening the camera
+        // Fast GPS check with timeout
         navigator.geolocation.getCurrentPosition(() => {
             openCamera();
         }, () => {
             alert("Location permission is required to check in/out.");
-        });
+        }, { timeout: 10000 });
     }
 
     async function openCamera() {
@@ -445,14 +403,12 @@
         status.textContent = "Scanning for human face...";
         status.className = "mt-6 text-asg-accent text-center h-6 font-bold tracking-wider";
 
-        // Detect faces using tinyFaceDetector
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
         
         if (detections.length > 0) {
             status.textContent = "Identity verified.";
             status.className = "mt-6 text-green-500 text-center h-6 font-bold tracking-wider";
             
-            // Draw video frame to a temporary canvas to get the image blob
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -476,10 +432,16 @@
     // ==========================================
     async function finalizeDutyState(photoBlob) {
         const dutyBtn = document.getElementById('duty-btn');
-        const originalHtml = dutyBtn.innerHTML;
+        const icon = document.getElementById('duty-icon');
+        const label = document.getElementById('duty-label');
         
-        // Show loading state on main button
-        dutyBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-4xl text-white"></i>';
+        // Save previous states in case of failure
+        const prevIconClass = icon.className;
+        const prevLabelText = label.textContent;
+
+        // Safely update specific elements WITHOUT destroying them
+        icon.className = 'fas fa-spinner fa-spin text-5xl md:text-6xl text-white mb-2 md:mb-4';
+        label.textContent = 'SYNCING...';
         dutyBtn.disabled = true;
 
         navigator.geolocation.getCurrentPosition(async (position) => {
@@ -513,18 +475,23 @@
                         });
                     }
                 }
+                // Success! The Firestore listener will automatically update the UI correctly.
             } catch (error) {
                 console.error("Deployment update failed:", error);
-                alert("A system error occurred. Please try again.");
+                alert("Upload failed. Ensure Storage rules are set up correctly.");
+                // Revert button if it fails
+                icon.className = prevIconClass;
+                label.textContent = prevLabelText;
             } finally {
                 dutyBtn.disabled = false;
-                dutyBtn.innerHTML = originalHtml;
             }
         }, (error) => {
             alert("Failed to acquire GPS lock. Please check your location settings.");
+            // Revert button if GPS fails
+            icon.className = prevIconClass;
+            label.textContent = prevLabelText;
             dutyBtn.disabled = false;
-            dutyBtn.innerHTML = originalHtml;
-        });
+        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }); // Added strict options to prevent hanging
     }
 
     // ==========================================
