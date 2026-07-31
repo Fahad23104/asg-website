@@ -13,6 +13,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <!-- ADDED: Firebase Storage for saving photos -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+    <!-- ADDED: Face-API.js for facial detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
     <script>
         tailwind.config = {
@@ -31,7 +36,6 @@
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         .form-input { width: 100%; background-color: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.6); border-radius: 4px; padding: 1rem; color: white; }
         .form-input:focus { outline: none; border-color: #f59e0b; }
-        /* Hide scrollbar for a cleaner app feel */
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -48,6 +52,25 @@
             <p id="auth-error" class="text-red-500 text-sm hidden"></p>
             <button onclick="login()" class="w-full py-4 bg-asg-accent text-black font-bold uppercase tracking-widest rounded mt-4">
                 Authenticate
+            </button>
+        </div>
+    </div>
+
+    <!-- NEW: CAMERA OVERLAY MODAL -->
+    <div id="camera-modal" class="hidden absolute inset-0 z-[100] bg-asg-dark flex flex-col items-center justify-center p-6">
+        <h2 class="text-xl font-bold mb-4 text-asg-accent tracking-widest uppercase">Identity Verification</h2>
+        <p class="text-slate-400 text-sm mb-6 text-center">Please ensure your face is clearly visible to authorize deployment.</p>
+        
+        <div class="relative w-full max-w-sm aspect-[3/4] bg-black rounded-lg overflow-hidden border-2 border-slate-700 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+            <video id="video-feed" autoplay playsinline class="w-full h-full object-cover transform scale-x-[-1]"></video>
+        </div>
+        
+        <p id="face-status" class="mt-6 text-slate-300 text-center h-6 font-bold tracking-wider">Awaiting Camera...</p>
+        
+        <div class="flex gap-4 mt-8 w-full max-w-sm">
+            <button onclick="closeCamera()" class="flex-1 py-4 bg-slate-700 rounded text-white font-bold uppercase tracking-wide transition-colors hover:bg-slate-600">Cancel</button>
+            <button id="capture-btn" onclick="captureAndVerify()" class="flex-1 py-4 bg-asg-accent text-black rounded font-bold uppercase tracking-wide flex justify-center items-center transition-colors hover:bg-asg-accentHover">
+                <i class="fas fa-camera mr-2"></i> Verify
             </button>
         </div>
     </div>
@@ -114,14 +137,12 @@
 
         <!-- Bottom Navigation -->
         <nav class="bg-asg-card border-t border-slate-800 flex justify-around py-3 pb-6 md:pb-4 relative z-10 shadow-[0_-5px_15px_rgba(0,0,0,0.3)]">
-            <!-- Duty Tab -->
             <button onclick="switchView('dashboard')" id="nav-dash" class="relative flex-1 flex flex-col items-center justify-center text-asg-accent group transition-all duration-300 py-2">
                 <div id="nav-dash-bg" class="absolute inset-0 bg-asg-accent/10 rounded-xl mx-2 md:mx-12 transition-all duration-300"></div>
                 <i id="nav-dash-icon" class="fas fa-crosshairs text-2xl mb-1 relative z-10 transition-transform duration-300 group-active:scale-90"></i>
                 <span class="text-[10px] uppercase tracking-widest font-bold relative z-10">Duty</span>
             </button>
             
-            <!-- History Tab -->
             <button onclick="switchView('history')" id="nav-hist" class="relative flex-1 flex flex-col items-center justify-center text-slate-500 group transition-all duration-300 py-2">
                 <div id="nav-hist-bg" class="absolute inset-0 bg-transparent rounded-xl mx-2 md:mx-12 transition-all duration-300"></div>
                 <i id="nav-hist-icon" class="fas fa-clipboard-list text-2xl mb-1 relative z-10 transition-transform duration-300 group-active:scale-90"></i>
@@ -135,21 +156,39 @@
     // 1. YOUR FIREBASE CONFIG
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyB0APzpLavq-760Tqonk-1QBFJ548iHIH4",
-  authDomain: "asg-security-6c996.firebaseapp.com",
-  projectId: "asg-security-6c996",
-  storageBucket: "asg-security-6c996.firebasestorage.app",
-  messagingSenderId: "263955462065",
-  appId: "1:263955462065:web:6212a45d8697a83bcf2f90",
-  measurementId: "G-8CH28YZZ0G"
-};
+      apiKey: "AIzaSyB0APzpLavq-760Tqonk-1QBFJ548iHIH4",
+      authDomain: "asg-security-6c996.firebaseapp.com",
+      projectId: "asg-security-6c996",
+      storageBucket: "asg-security-6c996.firebasestorage.app",
+      messagingSenderId: "263955462065",
+      appId: "1:263955462065:web:6212a45d8697a83bcf2f90",
+      measurementId: "G-8CH28YZZ0G"
+    };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const storage = firebase.storage(); // Added Storage initialization
 
     let currentUser = null;
     let isOnDuty = false;
     let currentShiftId = null;
+
+    // ==========================================
+    // FACE API INITIALIZATION
+    // ==========================================
+    let modelsLoaded = false;
+    async function loadFaceModels() {
+        try {
+            // Load tiny face detector model from a reliable public CDN
+            const MODEL_URL = 'https://vladmandic.github.io/face-api/model/';
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            modelsLoaded = true;
+            console.log("Face API security models loaded successfully.");
+        } catch (e) {
+            console.error("Failed to load facial recognition models:", e);
+        }
+    }
+    loadFaceModels();
 
     // ==========================================
     // AUTHENTICATION & REALTIME SYNC
@@ -159,8 +198,6 @@
             currentUser = user;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            
-            // Start listening to real-time sync with mobile & history
             syncGuardStateAndHistory();
         } else {
             currentUser = null;
@@ -197,7 +234,6 @@
               let shifts = [];
               let activeShift = null;
 
-              // Time buckets for statistics (in milliseconds)
               let totalMs24h = 0;
               let totalMs7d = 0;
               let totalMs30d = 0;
@@ -218,21 +254,17 @@
                       activeShift = data;
                   }
 
-                  // --- STATISTIC CALCULATIONS ---
                   if (data.checkInTime) {
                       const checkInDate = data.checkInTime.toDate();
                       const timeSinceCheckIn = now - checkInDate;
                       
                       let shiftDurationMs = 0;
                       if (data.checkOutTime) {
-                          // Completed shift
                           shiftDurationMs = data.checkOutTime.toDate() - checkInDate;
                       } else {
-                          // Active shift (calculate duration up to this exact moment)
                           shiftDurationMs = now - checkInDate;
                       }
 
-                      // Allocate duration to the correct time buckets
                       if (timeSinceCheckIn <= ms24h) totalMs24h += shiftDurationMs;
                       if (timeSinceCheckIn <= ms7d) totalMs7d += shiftDurationMs;
                       if (timeSinceCheckIn <= ms30d) totalMs30d += shiftDurationMs;
@@ -240,7 +272,6 @@
                   }
               });
 
-              // Helper function to convert milliseconds to "Xh Ym"
               const formatStat = (ms) => {
                   let totalMins = Math.floor(ms / 60000);
                   let hrs = Math.floor(totalMins / 60);
@@ -248,13 +279,11 @@
                   return `${hrs}h ${mins}m`;
               };
 
-              // Update the UI Dashboards
               document.getElementById('stat-24h').textContent = formatStat(totalMs24h);
               document.getElementById('stat-7d').textContent = formatStat(totalMs7d);
               document.getElementById('stat-30d').textContent = formatStat(totalMs30d);
               document.getElementById('stat-365d').textContent = formatStat(totalMs365d);
 
-              // --- DUTY UI TOGGLE ---
               if (activeShift) {
                   isOnDuty = true;
                   currentShiftId = activeShift.id;
@@ -265,7 +294,6 @@
                   updateDutyUI(false);
               }
 
-              // --- RENDER HISTORY LIST ---
               shifts.sort((a, b) => {
                   let timeA = a.checkInTime ? a.checkInTime.toDate() : new Date();
                   let timeB = b.checkInTime ? b.checkInTime.toDate() : new Date();
@@ -279,9 +307,7 @@
 
               shifts.forEach(data => {
                   if (!data.checkInTime) return;
-
                   const checkInDate = data.checkInTime.toDate();
-                  
                   const year = checkInDate.getFullYear();
                   const month = String(checkInDate.getMonth() + 1).padStart(2, '0');
                   const day = String(checkInDate.getDate()).padStart(2, '0');
@@ -336,7 +362,7 @@
               console.error("Firestore sync error:", error);
           });
     }
-    // Dynamic UI Toggle for Duty Button
+
     function updateDutyUI(active) {
         const btn = document.getElementById('duty-btn');
         const icon = document.getElementById('duty-icon');
@@ -361,47 +387,148 @@
     }
 
     // ==========================================
-    // GPS & TOGGLE DUTY
+    // CAMERA & FACIAL RECOGNITION LOGIC
     // ==========================================
-    async function toggleDuty() {
+    let videoStream = null;
+
+    function toggleDuty() {
         if (!navigator.geolocation) {
             alert("Geolocation is not supported by your browser");
             return;
         }
 
-        navigator.geolocation.getCurrentPosition(async (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            
-            // Construct the clickable Google Maps URL
-            const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+        if (!modelsLoaded) {
+            alert("Security models are still loading. Please wait a few seconds and try again.");
+            return;
+        }
 
-            if (!isOnDuty) {
-                // Check In
-                await db.collection('shifts').add({
-                    guardId: currentUser.uid,
-                    guardEmail: currentUser.email,
-                    checkInTime: firebase.firestore.FieldValue.serverTimestamp(),
-                    checkInMapUrl: mapLink, // Saving as a clickable URL
-                    status: 'active'
-                });
-            } else {
-                // Check Out
-                if (currentShiftId) {
-                    await db.collection('shifts').doc(currentShiftId).update({
-                        checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
-                        checkOutMapUrl: mapLink, // Saving as a clickable URL
-                        status: 'completed'
-                    });
-                }
-            }
-        }, (error) => {
+        // Test location permissions before opening the camera
+        navigator.geolocation.getCurrentPosition(() => {
+            openCamera();
+        }, () => {
             alert("Location permission is required to check in/out.");
         });
     }
 
+    async function openCamera() {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            document.getElementById('video-feed').srcObject = videoStream;
+            
+            document.getElementById('face-status').textContent = "Look directly at the camera.";
+            document.getElementById('face-status').className = "mt-6 text-slate-300 text-center h-6 font-bold tracking-wider";
+            document.getElementById('camera-modal').classList.remove('hidden');
+            
+            const btn = document.getElementById('capture-btn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-camera mr-2"></i> Verify';
+        } catch (err) {
+            alert("Camera access is strictly required for identity verification.");
+        }
+    }
+
+    function closeCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        document.getElementById('camera-modal').classList.add('hidden');
+    }
+
+    async function captureAndVerify() {
+        const video = document.getElementById('video-feed');
+        const status = document.getElementById('face-status');
+        const btn = document.getElementById('capture-btn');
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Scanning...';
+        status.textContent = "Scanning for human face...";
+        status.className = "mt-6 text-asg-accent text-center h-6 font-bold tracking-wider";
+
+        // Detect faces using tinyFaceDetector
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+        
+        if (detections.length > 0) {
+            status.textContent = "Identity verified.";
+            status.className = "mt-6 text-green-500 text-center h-6 font-bold tracking-wider";
+            
+            // Draw video frame to a temporary canvas to get the image blob
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            canvas.toBlob(async (blob) => {
+                closeCamera();
+                await finalizeDutyState(blob);
+            }, 'image/jpeg', 0.8);
+            
+        } else {
+            status.textContent = "No face detected! Please ensure clear lighting.";
+            status.className = "mt-6 text-red-500 text-center h-6 font-bold tracking-wider";
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-camera mr-2"></i> Try Again';
+        }
+    }
+
     // ==========================================
-    // VIEW NAVIGATION & UI
+    // FINALIZE DUTY (GPS + Storage + Firestore)
+    // ==========================================
+    async function finalizeDutyState(photoBlob) {
+        const dutyBtn = document.getElementById('duty-btn');
+        const originalHtml = dutyBtn.innerHTML;
+        
+        // Show loading state on main button
+        dutyBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-4xl text-white"></i>';
+        dutyBtn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            try {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                
+                // Upload captured photo to Firebase Storage
+                const timestamp = new Date().getTime();
+                const photoRef = storage.ref(`guard_verifications/${currentUser.uid}/${timestamp}.jpg`);
+                await photoRef.put(photoBlob);
+                const photoUrl = await photoRef.getDownloadURL();
+
+                if (!isOnDuty) {
+                    await db.collection('shifts').add({
+                        guardId: currentUser.uid,
+                        guardEmail: currentUser.email,
+                        checkInTime: firebase.firestore.FieldValue.serverTimestamp(),
+                        checkInMapUrl: mapLink,
+                        checkInPhotoUrl: photoUrl,
+                        status: 'active'
+                    });
+                } else {
+                    if (currentShiftId) {
+                        await db.collection('shifts').doc(currentShiftId).update({
+                            checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
+                            checkOutMapUrl: mapLink,
+                            checkOutPhotoUrl: photoUrl,
+                            status: 'completed'
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Deployment update failed:", error);
+                alert("A system error occurred. Please try again.");
+            } finally {
+                dutyBtn.disabled = false;
+                dutyBtn.innerHTML = originalHtml;
+            }
+        }, (error) => {
+            alert("Failed to acquire GPS lock. Please check your location settings.");
+            dutyBtn.disabled = false;
+            dutyBtn.innerHTML = originalHtml;
+        });
+    }
+
+    // ==========================================
+    // VIEW NAVIGATION
     // ==========================================
     function switchView(view) {
         const dash = document.getElementById('tab-dashboard');
@@ -414,27 +541,21 @@
         const navHistBg = document.getElementById('nav-hist-bg');
 
         if (view === 'dashboard') {
-            // Show Dashboard
             dash.classList.remove('hidden');
             hist.classList.add('hidden');
             
-            // Highlight Duty Tab
             navDash.classList.replace('text-slate-500', 'text-asg-accent');
             navDashBg.classList.replace('bg-transparent', 'bg-asg-accent/10');
             
-            // Dim History Tab
             navHist.classList.replace('text-asg-accent', 'text-slate-500');
             navHistBg.classList.replace('bg-asg-accent/10', 'bg-transparent');
         } else {
-            // Show History
             dash.classList.add('hidden');
             hist.classList.remove('hidden');
             
-            // Highlight History Tab
             navHist.classList.replace('text-slate-500', 'text-asg-accent');
             navHistBg.classList.replace('bg-transparent', 'bg-asg-accent/10');
             
-            // Dim Duty Tab
             navDash.classList.replace('text-asg-accent', 'text-slate-500');
             navDashBg.classList.replace('bg-asg-accent/10', 'bg-transparent');
         }
