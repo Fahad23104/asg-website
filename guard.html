@@ -414,10 +414,11 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             
-            canvas.toBlob(async (blob) => {
-                closeCamera();
-                await finalizeDutyState(blob);
-            }, 'image/jpeg', 0.8);
+            // WORKAROUND: Compress heavily and convert to Base64 text string instead of a Blob file
+            const base64ImageString = canvas.toDataURL('image/jpeg', 0.4); 
+            
+            closeCamera();
+            await finalizeDutyState(base64ImageString);
             
         } else {
             status.textContent = "No face detected! Please ensure clear lighting.";
@@ -430,31 +431,25 @@
     // ==========================================
     // FINALIZE DUTY (GPS + Storage + Firestore)
     // ==========================================
-    async function finalizeDutyState(photoBlob) {
+    async function finalizeDutyState(base64PhotoData) {
         const dutyBtn = document.getElementById('duty-btn');
         const icon = document.getElementById('duty-icon');
         const label = document.getElementById('duty-label');
         
-        // Save previous states in case of failure
         const prevIconClass = icon.className;
         const prevLabelText = label.textContent;
 
-        // Safely update specific elements WITHOUT destroying them
         icon.className = 'fas fa-spinner fa-spin text-5xl md:text-6xl text-white mb-2 md:mb-4';
-        label.textContent = 'SYNCING...';
+        label.textContent = 'GETTING GPS...';
         dutyBtn.disabled = true;
 
         navigator.geolocation.getCurrentPosition(async (position) => {
             try {
+                label.textContent = 'SAVING DATABASE...';
+                
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
-                
-                // Upload captured photo to Firebase Storage
-                const timestamp = new Date().getTime();
-                const photoRef = storage.ref(`guard_verifications/${currentUser.uid}/${timestamp}.jpg`);
-                await photoRef.put(photoBlob);
-                const photoUrl = await photoRef.getDownloadURL();
 
                 if (!isOnDuty) {
                     await db.collection('shifts').add({
@@ -462,7 +457,7 @@
                         guardEmail: currentUser.email,
                         checkInTime: firebase.firestore.FieldValue.serverTimestamp(),
                         checkInMapUrl: mapLink,
-                        checkInPhotoUrl: photoUrl,
+                        checkInPhotoData: base64PhotoData, // Saved as text string directly in database
                         status: 'active'
                     });
                 } else {
@@ -470,28 +465,27 @@
                         await db.collection('shifts').doc(currentShiftId).update({
                             checkOutTime: firebase.firestore.FieldValue.serverTimestamp(),
                             checkOutMapUrl: mapLink,
-                            checkOutPhotoUrl: photoUrl,
+                            checkOutPhotoData: base64PhotoData, // Saved as text string directly in database
                             status: 'completed'
                         });
                     }
                 }
-                // Success! The Firestore listener will automatically update the UI correctly.
+                // Success! 
             } catch (error) {
                 console.error("Deployment update failed:", error);
-                alert("Upload failed. Ensure Storage rules are set up correctly.");
-                // Revert button if it fails
+                alert("Database Error: " + error.message);
+                
                 icon.className = prevIconClass;
                 label.textContent = prevLabelText;
             } finally {
                 dutyBtn.disabled = false;
             }
         }, (error) => {
-            alert("Failed to acquire GPS lock. Please check your location settings.");
-            // Revert button if GPS fails
+            alert("GPS Error: " + error.message + " (Please ensure location services are turned on).");
             icon.className = prevIconClass;
             label.textContent = prevLabelText;
             dutyBtn.disabled = false;
-        }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }); // Added strict options to prevent hanging
+        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }); 
     }
 
     // ==========================================
